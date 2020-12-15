@@ -23,8 +23,8 @@ static int counter = 0;
 void setup()
 {
   M5.begin();
-  M5.EPD.SetRotation(90);
-  M5.TP.SetRotation(90);
+  M5.EPD.SetRotation(0);
+  M5.TP.SetRotation(0);
   M5.EPD.Clear(true);
   M5.RTC.begin();
   canvas.createCanvas(540, 960);
@@ -43,7 +43,7 @@ void setup()
 
   File file = root.openNextFile();
   Serial.printf("Filename %s\n", file.name());
-  canvas.drawJpgFile(SD, file.name(), 0, 0 , 960, 540, 0, 0, JPEG_DIV_NONE);
+  canvas.drawJpgFile(SD, file.name(), 0, 0 , 540, 960, 0, 0, JPEG_DIV_NONE);
   canvas.pushCanvas(0, 0, UPDATE_MODE_GC16);
 }
 
