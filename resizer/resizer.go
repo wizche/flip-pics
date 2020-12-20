@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"io/ioutil"
 	"log"
@@ -13,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nfnt/resize"
+	"github.com/disintegration/imaging"
 )
 
 // CalculateDimensions returns the most suitable image for the given size
@@ -40,6 +41,10 @@ func main() {
 	output := flag.String("output", "", "output directory")
 	flag.Parse()
 
+	if len(*input) <= 0 || len(*output) <= 0 {
+		log.Fatal("Missing input/output parameters!")
+	}
+
 	outdir := *output
 	log.Printf("Processing image from %s, resizing into %s\n", *input, outdir)
 
@@ -54,6 +59,7 @@ func main() {
 
 		}
 		baseName := strings.TrimSuffix(item.Name(), filepath.Ext(item.Name()))
+		baseName = strings.ReplaceAll(baseName, "_", "-")
 		fullpath := path.Join(*input, item.Name())
 		log.Printf("Processing %s", fullpath)
 		file, err := os.Open(fullpath)
@@ -67,17 +73,32 @@ func main() {
 		file.Close()
 
 		var m image.Image
+		if img.Bounds().Max.Y > img.Bounds().Max.X {
+			log.Printf("Image wider then higher, rotating 90 degree!")
+			img = imaging.Rotate(img, 90.0, color.Gray{})
+		}
+
 		newSize := CalculateDimensions(img.Bounds().Max, 960.0, 540.0)
 
-		m = resize.Resize(uint(newSize.X), uint(newSize.Y), img, resize.Lanczos3)
-		filename := fmt.Sprintf("%s_%dx%d_%dx%d_resized.jpg", baseName, newSize.X, newSize.Y, int((960-newSize.X)/2.0), int((540-newSize.Y)/2.0))
-		log.Printf("Resized from %dx%d to %dx%d -> %s\n", img.Bounds().Max.X, img.Bounds().Max.Y, newSize.X, newSize.Y, filename)
+		m = imaging.Resize(img, newSize.X, newSize.Y, imaging.Lanczos)
+		width := newSize.X
+		height := newSize.Y
+
+		log.Printf("Resized from %dx%d to %dx%d\n", img.Bounds().Max.X, img.Bounds().Max.Y, width, height)
+
+		offsetX := int((960 - width) / 2.0)
+		offsetY := int((540 - height) / 2.0)
+
+		filename := fmt.Sprintf("%s_%dx%d_%dx%d_resized.jpg", baseName, width, height, offsetX, offsetY)
 		out, err := os.Create(path.Join(outdir, filename))
 		if err != nil {
 			log.Fatal(err)
 		}
-		// write new image to file
+
 		jpeg.Encode(out, m, nil)
+		log.Printf("Created new image %s", filename)
+
+		// write new image to file
 		out.Close()
 	}
 }
