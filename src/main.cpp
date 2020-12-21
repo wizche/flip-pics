@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 
-#define SLEEP_HOURS 12
+#define SLEEP_HOURS 6
 
 M5EPD_Canvas canvas(&M5.EPD);
 const char *DATA_FILE = "/data.txt";
