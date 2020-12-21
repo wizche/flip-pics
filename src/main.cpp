@@ -145,31 +145,27 @@ void load_image()
   f.close();
   Serial.printf("Written %d to file: %d\n", currentCount, bytes);
 
-  char batteryBuffer[20] = "CRG";
+  char batteryBuffer[20];
   uint32_t vol = M5.getBatteryVoltage();
 
-  // seems like if voltage is very low it means its charging
-  if (vol > 2500)
+  if (vol < 3300)
   {
-    if (vol < 3300)
-    {
-      vol = 3300;
-    }
-    else if (vol > 4350)
-    {
-      vol = 4350;
-    }
-    float battery = (float)(vol - 3300) / (float)(4350 - 3300);
-    if (battery <= 0.01)
-    {
-      battery = 0.01;
-    }
-    if (battery > 1)
-    {
-      battery = 1;
-    }
-    sprintf(batteryBuffer, "%d%%", (int)(battery * 100));
+    vol = 3300;
   }
+  else if (vol > 4350)
+  {
+    vol = 4350;
+  }
+  float battery = (float)(vol - 3300) / (float)(4350 - 3300);
+  if (battery <= 0.01)
+  {
+    battery = 0.01;
+  }
+  if (battery > 1)
+  {
+    battery = 1;
+  }
+  sprintf(batteryBuffer, "%d%%", (int)(battery * 100));
 
   char statusBuffer[256] = "CHARGING";
   M5.SHT30.UpdateData();
@@ -179,6 +175,7 @@ void load_image()
 
   canvas.drawRightString(statusBuffer, 960, 0, 1);
   canvas.pushCanvas(0, 0, UPDATE_MODE_GC16);
+  canvas.deleteCanvas();
 }
 
 void setup()
@@ -189,8 +186,7 @@ void setup()
   M5.RTC.begin();
 
   load_image();
-
-  M5.shutdown(SLEEP_HOURS * 60 * 60);
+  //M5.shutdown(SLEEP_HOURS * 60 * 60);
 }
 
 void loop()
@@ -201,4 +197,10 @@ void loop()
   }
   M5.update();
   delay(100);
+
+  //this only works when NOT attached
+  //Serial.printf("Restart in 10 seconds!");
+  delay(2000);
+  //M5.shutdown(10);
+  M5.shutdown(SLEEP_HOURS * 60 * 60);
 }
